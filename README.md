@@ -1,0 +1,1 @@
+# MineGuard — Mining Safety Incident Management System
