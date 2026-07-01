@@ -55,6 +55,8 @@ model UserSite {
   site      MineSite @relation(fields: [siteId], references: [id])
 
   @@unique([userId, siteId])
+  @@index([userId])
+  @@index([siteId])
 }
 
 enum Severity {
@@ -93,6 +95,11 @@ model Incident {
   site         MineSite @relation(fields: [siteId], references: [id])
   photos       Photo[]
   actions      Action[]
+
+  @@index([siteId])
+  @@index([reportedById])
+  @@index([status])
+  @@index([siteId, status])
 }
 
 model Photo {
@@ -104,6 +111,8 @@ model Photo {
   // Foreign key
   incidentId String
   incident   Incident @relation(fields: [incidentId], references: [id])
+
+  @@index([incidentId])
 }
 
 enum ActionStatus {
@@ -128,4 +137,7 @@ model Action {
   // Relations
   incident    Incident @relation(fields: [incidentId], references: [id])
   assignedTo  User     @relation(fields: [assignedToId], references: [id])
+
+  @@index([incidentId])
+  @@index([assignedToId])
 }
