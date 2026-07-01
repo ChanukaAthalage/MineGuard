@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  WORKER
+  SUPERVISOR
+  ADMIN
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  password  String
+  role      Role     @default(WORKER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations 
+  sites     UserSite[]
+  incidents Incident[]
+  actions   Action[]
+}
+
+model MineSite {
+  id        String   @id @default(cuid())
+  name      String
+  location  String
+  latitude  Float?
+  longitude Float?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  users     UserSite[]
+  incidents Incident[]
+}
+
+model UserSite {
+  id        String   @id @default(cuid())
+  userId    String
+  siteId    String
+  createdAt DateTime @default(now())
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id])
+  site      MineSite @relation(fields: [siteId], references: [id])
+
+  @@unique([userId, siteId])
+  @@index([userId])
+  @@index([siteId])
+}
+
+enum Severity {
+  NEAR_MISS
+  TREATMENT_INJURY
+  LOST_TIME_INJURY
+  DANGEROUS_INCIDENT
+  FATALITY
+}
+
+enum IncidentStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  CLOSED
+}
+
+model Incident {
+  id           String         @id @default(cuid())
+  title        String
+  description  String
+  severity     Severity
+  status       IncidentStatus @default(DRAFT)
+  latitude     Float?
+  longitude    Float?
+  occurredAt   DateTime
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  // Foreign keys
+  reportedById String
+  siteId       String
+
+  // Relations
+  reportedBy   User     @relation(fields: [reportedById], references: [id])
+  site         MineSite @relation(fields: [siteId], references: [id])
+  photos       Photo[]
+  actions      Action[]
+
+  @@index([siteId])
+  @@index([reportedById])
+  @@index([status])
+  @@index([siteId, status])
+}
+
+model Photo {
+  id         String   @id @default(cuid())
+  url        String
+  key        String
+  createdAt  DateTime @default(now())
+
+  // Foreign key
+  incidentId String
+  incident   Incident @relation(fields: [incidentId], references: [id])
+
+  @@index([incidentId])
+}
+
+enum ActionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+}
+
+model Action {
+  id          String       @id @default(cuid())
+  description String
+  dueDate     DateTime
+  status      ActionStatus @default(PENDING)
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  // Foreign keys
+  incidentId  String
+  assignedToId String
+
+  // Relations
+  incident    Incident @relation(fields: [incidentId], references: [id])
+  assignedTo  User     @relation(fields: [assignedToId], references: [id])
+
+  @@index([incidentId])
+  @@index([assignedToId])
+}
